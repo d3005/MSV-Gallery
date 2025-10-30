@@ -3,31 +3,36 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import ThemeToggle from "@/components/ThemeToggle";
 import UploadModal from "@/components/UploadModal";
 
+const linkClass = (isActive) =>
+  [
+    "relative px-1 py-0.5 text-sm font-semibold tracking-wide transition-all",
+    "text-slate-200/90 hover:text-cyan-300",
+    isActive ? "text-cyan-300" : "",
+    // neon glow around text
+    "drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]",
+    // underline glow on hover/active
+    "after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-0 after:rounded-full",
+    "after:bg-gradient-to-r after:from-fuchsia-400 after:to-cyan-400 after:shadow-[0_0_10px_#22d3ee] after:transition-all",
+    isActive ? "after:w-full" : "hover:after:w-full",
+  ].join(" ");
+
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
-  const linkBase = "relative transition-colors hover:text-foreground text-muted-foreground after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-0 after:bg-gradient-to-r after:from-emerald-400 after:to-sky-500 after:transition-all hover:after:w-full";
-
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b bg-gradient-to-r from-emerald-50/90 via-sky-50/80 to-cyan-50/90 backdrop-blur supports-[backdrop-filter]:bg-sky-50/60">
+      <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#0b1220]/80 backdrop-blur supports-[backdrop-filter]:bg-[#0b1220]/70">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <Link to="/" className="group inline-flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-emerald-400 via-sky-500 to-cyan-500 shadow ring-1 ring-white/40" />
-            <span className="text-sm font-semibold tracking-wide">MSVAV's Clicks</span>
+            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-fuchsia-500 via-cyan-400 to-emerald-400 shadow-[0_0_18px_rgba(34,211,238,0.7)] ring-1 ring-cyan-300/50" />
+            <span className="text-sm font-bold tracking-wide text-slate-100 drop-shadow-[0_0_8px_rgba(255,255,255,0.35)]">MSVAV's Clicks</span>
           </Link>
-          <nav className="flex items-center gap-6 text-sm">
-            <NavLink
-              to="/"
-              className={({ isActive }) => `${linkBase} ${isActive ? "text-foreground" : ""}`}
-            >
+          <nav className="flex items-center gap-6">
+            <NavLink to="/" className={({ isActive }) => linkClass(isActive)}>
               Home
             </NavLink>
-            <NavLink
-              to="/gallery"
-              className={({ isActive }) => `${linkBase} ${isActive ? "text-foreground" : ""}`}
-            >
+            <NavLink to="/gallery" className={({ isActive }) => linkClass(isActive)}>
               Gallery
             </NavLink>
             <button
@@ -35,7 +40,7 @@ const Navbar = () => {
                 setOpen(true);
                 navigate("/gallery");
               }}
-              className="inline-flex items-center rounded-md bg-gradient-to-r from-sky-600 to-cyan-600 px-3 py-1.5 text-xs font-medium text-white shadow hover:shadow-md active:scale-95"
+              className="inline-flex h-9 items-center rounded-md bg-gradient-to-r from-fuchsia-500 via-cyan-400 to-emerald-400 px-3 text-xs font-bold text-slate-900 shadow-[0_0_18px_rgba(56,189,248,0.8)] ring-1 ring-cyan-300/60 transition-transform hover:scale-[1.02] active:scale-95"
             >
               Upload
             </button>
