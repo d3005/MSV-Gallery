@@ -101,7 +101,7 @@ async def upload_photo(
             if not chunk:
                 break
             total += len(chunk)
-            upload_stream.write(chunk)
+            await upload_stream.write(chunk)
         await upload_stream.close()
     except Exception as e:
         # Cleanup partial file if needed
