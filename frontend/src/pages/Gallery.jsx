@@ -1,25 +1,43 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const Gallery = () => {
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const resp = await fetch("/images.json");
-        const data = await resp.json();
-        setPhotos(data.images || []);
-      } catch (e) {
-        setError("Failed to load images");
-      } finally {
-        setLoading(false);
+  const fetchPhotos = useCallback(async () => {
+    try {
+      const resp = await axios.get(`${API}/photos`);
+      setPhotos(resp.data.photos || []);
+      // seed if empty
+      if (!resp.data.photos || resp.data.photos.length === 0) {
+        try {
+          await axios.post(`${API}/photos/seed`);
+          const resp2 = await axios.get(`${API}/photos`);
+          setPhotos(resp2.data.photos || []);
+        } catch {}
       }
-    };
-    load();
+    } catch (e) {
+      setError("Failed to load images");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchPhotos();
+  }, [fetchPhotos]);
+
+  useEffect(() => {
+    const refresh = () => fetchPhotos();
+    window.addEventListener("gallery:refresh", refresh);
+    return () => window.removeEventListener("gallery:refresh", refresh);
+  }, [fetchPhotos]);
 
   if (loading) {
     return (
@@ -48,12 +66,12 @@ const Gallery = () => {
       <div className="columns-1 gap-5 sm:columns-2 md:columns-3">
         {photos.map((photo, index) => (
           <Link
-            key={index}
+            key={photo.id}
             to={`/photo/${index}`}
             className="group relative mb-5 block break-inside-avoid overflow-hidden rounded-2xl ring-1 ring-border"
           >
             <img
-              src={photo.url}
+              src={`${API}${photo.path}`}
               alt={photo.alt || `Photo ${index + 1}`}
               className="w-full rounded-2xl object-cover transition-transform duration-300 group-hover:scale-[1.02]"
               loading="lazy"

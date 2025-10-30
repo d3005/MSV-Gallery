@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
+import axios from "axios";
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const PhotoDetail = () => {
   const { id } = useParams();
@@ -10,9 +14,8 @@ const PhotoDetail = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const resp = await fetch("/images.json");
-        const data = await resp.json();
-        setPhotos(data.images || []);
+        const resp = await axios.get(`${API}/photos`);
+        setPhotos(resp.data.photos || []);
       } catch {
         // ignore
       }
@@ -46,7 +49,7 @@ const PhotoDetail = () => {
         <nav className="text-sm text-muted-foreground">
           <Link to="/gallery" className="hover:text-foreground">Gallery</Link>
           <span className="mx-2">/</span>
-          <span>Photo {index + 1}</span>
+          <span>{photo.title || `Photo ${index + 1}`}</span>
         </nav>
         <div className="flex items-center gap-2">
           <button
@@ -72,7 +75,7 @@ const PhotoDetail = () => {
         </div>
       </div>
       <div className="overflow-hidden rounded-2xl ring-1 ring-border">
-        <img src={photo.url} alt={photo.alt || `Photo ${index + 1}`} className="w-full object-contain" />
+        <img src={`${API}${photo.path}`} alt={photo.alt || `Photo ${index + 1}`} className="w-full object-contain" />
       </div>
     </main>
   );

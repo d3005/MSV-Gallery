@@ -9,52 +9,52 @@ const Home = () => {
     const ping = async () => {
       try {
         await axios.get(`${API}/`);
-      } catch (e) {
-        // no-op: backend might be offline in some environments
-        // console.warn("Backend ping failed", e);
-      }
+      } catch (e) {}
     };
     ping();
   }, []);
 
   return (
     <main>
-      <section className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 pb-16 pt-10 md:grid-cols-2 md:pt-16">
-        <div className="space-y-6">
-          <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs text-muted-foreground">
-            <span>Photography</span>
-            <span className="h-1 w-1 rounded-full bg-muted-foreground" />
-            <span>Nature • Travel • Moments</span>
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-sky-100 via-sky-50 to-white" />
+        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 pb-20 pt-12 md:grid-cols-2 md:pt-20">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-full border bg-white/60 px-3 py-1 text-xs text-sky-700">
+              <span>Nature</span>
+              <span className="h-1 w-1 rounded-full bg-sky-400" />
+              <span>Sky • Sea • Forest</span>
+            </div>
+            <h1 className="text-3xl font-bold leading-tight tracking-tight md:text-5xl">
+              MSVAV's Photography Journey Begins Here
+            </h1>
+            <p className="text-muted-foreground md:text-lg">
+              Capturing the whispers of the wind, the glow of the moon, and the colors of a setting sun. Every tree tells a
+              story, every flower blooms with joyful moments of nature, frozen in time.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="/gallery"
+                className="inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-sky-700"
+              >
+                Explore Now
+              </a>
+              <a
+                href="#about"
+                className="inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent"
+              >
+                Learn more
+              </a>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold leading-tight tracking-tight md:text-5xl">
-            MSVAV's Photography Journey Begins Here
-          </h1>
-          <p className="text-muted-foreground md:text-lg">
-            Capturing the whispers of the wind, the glow of the moon, and the colors of a setting sun. Every tree tells a
-            story, every flower blooms with joyful moments of nature, frozen in time.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <a
-              href="/gallery"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:opacity-90"
-            >
-              Explore Now
-            </a>
-            <a
-              href="#about"
-              className="inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent"
-            >
-              Learn more
-            </a>
+          <div className="relative">
+            <div className="absolute -inset-4 -z-10 rounded-3xl bg-gradient-to-tr from-sky-300/30 via-sky-400/20 to-cyan-400/20 blur-2xl" />
+            <img
+              src="/images/logo.jpg"
+              alt="Gallery preview"
+              className="aspect-[4/3] w-full rounded-2xl object-cover shadow-lg ring-1 ring-border"
+            />
           </div>
-        </div>
-        <div className="relative">
-          <div className="absolute -inset-4 -z-10 rounded-3xl bg-gradient-to-tr from-pink-500/30 via-fuchsia-500/20 to-yellow-500/20 blur-xl" />
-          <img
-            src="/images/logo.jpg"
-            alt="Gallery preview"
-            className="aspect-[4/3] w-full rounded-2xl object-cover shadow-lg ring-1 ring-border"
-          />
         </div>
       </section>
       <section id="about" className="mx-auto max-w-6xl px-4 pb-20">
