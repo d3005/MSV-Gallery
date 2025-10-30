@@ -14,7 +14,6 @@ const Gallery = () => {
     try {
       const resp = await axios.get(`${API}/photos`);
       setPhotos(resp.data.photos || []);
-      // seed if empty
       if (!resp.data.photos || resp.data.photos.length === 0) {
         try {
           await axios.post(`${API}/photos/seed`);
@@ -29,10 +28,7 @@ const Gallery = () => {
     }
   }, []);
 
-  useEffect(() => {
-    fetchPhotos();
-  }, [fetchPhotos]);
-
+  useEffect(() => { fetchPhotos(); }, [fetchPhotos]);
   useEffect(() => {
     const refresh = () => fetchPhotos();
     window.addEventListener("gallery:refresh", refresh);
@@ -44,7 +40,7 @@ const Gallery = () => {
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-10">
         <div className="columns-1 gap-5 sm:columns-2 md:columns-3">
           {Array.from({ length: 9 }).map((_, i) => (
-            <div key={i} className="mb-5 h-60 animate-pulse rounded-2xl bg-muted" />
+            <div key={i} className="mb-5 h-60 animate-pulse rounded-2xl bg-gradient-to-br from-sky-50 to-white" />
           ))}
         </div>
       </div>
@@ -52,9 +48,7 @@ const Gallery = () => {
   }
 
   if (error) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center text-red-500">{error}</div>
-    );
+    return <div className="mx-auto max-w-2xl px-4 py-16 text-center text-red-500">{error}</div>;
   }
 
   return (
@@ -73,8 +67,9 @@ const Gallery = () => {
             <img
               src={`${API}${photo.path}`}
               alt={photo.alt || `Photo ${index + 1}`}
-              className="w-full rounded-2xl object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+              className="w-full rounded-2xl object-cover opacity-0 transition-all duration-500 group-hover:scale-[1.02]"
               loading="lazy"
+              onLoad={(e) => e.currentTarget.classList.remove("opacity-0")}
             />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             <div className="absolute bottom-3 left-3">
