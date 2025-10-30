@@ -24,9 +24,9 @@ const Gallery = () => {
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-10">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+        <div className="columns-1 gap-5 sm:columns-2 md:columns-3">
           {Array.from({ length: 9 }).map((_, i) => (
-            <div key={i} className="aspect-square animate-pulse rounded-2xl bg-muted" />
+            <div key={i} className="mb-5 h-60 animate-pulse rounded-2xl bg-muted" />
           ))}
         </div>
       </div>
@@ -45,17 +45,17 @@ const Gallery = () => {
         <h2 className="text-2xl font-bold md:text-3xl">Gallery</h2>
         <p className="text-sm text-muted-foreground">{photos.length} photos</p>
       </div>
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
+      <div className="columns-1 gap-5 sm:columns-2 md:columns-3">
         {photos.map((photo, index) => (
           <Link
             key={index}
             to={`/photo/${index}`}
-            className="group relative block overflow-hidden rounded-2xl ring-1 ring-border"
+            className="group relative mb-5 block break-inside-avoid overflow-hidden rounded-2xl ring-1 ring-border"
           >
             <img
               src={photo.url}
               alt={photo.alt || `Photo ${index + 1}`}
-              className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className="w-full rounded-2xl object-cover transition-transform duration-300 group-hover:scale-[1.02]"
               loading="lazy"
             />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />

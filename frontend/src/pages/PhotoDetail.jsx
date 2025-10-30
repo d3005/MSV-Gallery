@@ -20,6 +20,16 @@ const PhotoDetail = () => {
     load();
   }, []);
 
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") navigate(-1);
+      if (e.key === "ArrowLeft" && index > 0) navigate(`/photo/${index - 1}`);
+      if (e.key === "ArrowRight" && index < photos.length - 1) navigate(`/photo/${index + 1}`);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [index, navigate, photos.length]);
+
   const photo = photos[index];
 
   if (!Number.isFinite(index)) {
@@ -38,12 +48,28 @@ const PhotoDetail = () => {
           <span className="mx-2">/</span>
           <span>Photo {index + 1}</span>
         </nav>
-        <button
-          onClick={() => navigate(-1)}
-          className="rounded-md border px-3 py-1.5 text-sm hover:bg-accent"
-        >
-          Back
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            disabled={index <= 0}
+            onClick={() => navigate(`/photo/${index - 1}`)}
+            className="rounded-md border px-3 py-1.5 text-sm enabled:hover:bg-accent disabled:opacity-50"
+          >
+            Prev
+          </button>
+          <button
+            onClick={() => navigate(-1)}
+            className="rounded-md border px-3 py-1.5 text-sm hover:bg-accent"
+          >
+            Back
+          </button>
+          <button
+            disabled={index >= photos.length - 1}
+            onClick={() => navigate(`/photo/${index + 1}`)}
+            className="rounded-md border px-3 py-1.5 text-sm enabled:hover:bg-accent disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
       </div>
       <div className="overflow-hidden rounded-2xl ring-1 ring-border">
         <img src={photo.url} alt={photo.alt || `Photo ${index + 1}`} className="w-full object-contain" />
