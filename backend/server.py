@@ -1,12 +1,13 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, UploadFile, File, Form, HTTPException
+from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorGridFSBucket
 import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List
+from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
 
@@ -19,6 +20,9 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# GridFS bucket (store image binaries in DB)
+bucket = AsyncIOMotorGridFSBucket(db)
+
 # Create the main app without a prefix
 app = FastAPI()
 
@@ -29,13 +33,26 @@ api_router = APIRouter(prefix="/api")
 # Define Models
 class StatusCheck(BaseModel):
     model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     client_name: str
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class StatusCheckCreate(BaseModel):
     client_name: str
+
+class Photo(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    filename: str
+    content_type: Optional[str] = None
+    size: int
+    created_at: datetime
+    alt: Optional[str] = None
+    title: Optional[str] = None
+    path: str  # frontend should prefix with `${API}`
+
+class PhotoList(BaseModel):
+    photos: List[Photo]
 
 # Add your routes to the router instead of directly to app
 @api_router.get("/")
@@ -46,25 +63,122 @@ async def root():
 async def create_status_check(input: StatusCheckCreate):
     status_dict = input.model_dump()
     status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
     doc = status_obj.model_dump()
     doc['timestamp'] = doc['timestamp'].isoformat()
-    
     _ = await db.status_checks.insert_one(doc)
     return status_obj
 
 @api_router.get("/status", response_model=List[StatusCheck])
 async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
     status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    
-    # Convert ISO string timestamps back to datetime objects
     for check in status_checks:
         if isinstance(check['timestamp'], str):
             check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
     return status_checks
+
+# Photos API
+@api_router.post("/photos", response_model=Photo)
+async def upload_photo(
+    file: UploadFile = File(...),
+    alt: Optional[str] = Form(None),
+    title: Optional[str] = Form(None),
+):
+    if not file:
+        raise HTTPException(status_code=400, detail="No file provided")
+
+    photo_id = str(uuid.uuid4())
+
+    # Stream upload into GridFS with custom string id
+    try:
+        upload_stream = await bucket.open_upload_stream_with_id(
+            photo_id,
+            file.filename,
+            metadata={"contentType": file.content_type},
+        )
+        total = 0
+        chunk = await file.read(1024 * 1024)
+        while chunk:
+            total += len(chunk)
+            await upload_stream.write(chunk)
+            chunk = await file.read(1024 * 1024)
+        await upload_stream.close()
+    except Exception as e:
+        # Cleanup partial file if needed
+        try:
+            await bucket.delete(photo_id)
+        except Exception:
+            pass
+        raise HTTPException(status_code=500, detail=f"Upload failed: {e}")
+
+    created = datetime.now(timezone.utc)
+
+    photo_doc = {
+        "id": photo_id,
+        "file_id": photo_id,  # same as id to avoid exposing ObjectId
+        "filename": file.filename,
+        "content_type": file.content_type,
+        "size": total,
+        "created_at": created.isoformat(),
+        "alt": alt,
+        "title": title,
+    }
+    await db.photos.insert_one(photo_doc)
+
+    resp = Photo(
+        id=photo_id,
+        filename=file.filename,
+        content_type=file.content_type,
+        size=total,
+        created_at=created,
+        alt=alt,
+        title=title,
+        path=f"/photos/{photo_id}/raw",
+    )
+    return resp
+
+@api_router.get("/photos", response_model=PhotoList)
+async def list_photos():
+    docs = await db.photos.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    photos: List[Photo] = []
+    for d in docs:
+        created = d.get("created_at")
+        if isinstance(created, str):
+            created = datetime.fromisoformat(created)
+        photos.append(
+            Photo(
+                id=d["id"],
+                filename=d.get("filename", ""),
+                content_type=d.get("content_type"),
+                size=int(d.get("size", 0)),
+                created_at=created or datetime.now(timezone.utc),
+                alt=d.get("alt"),
+                title=d.get("title"),
+                path=f"/photos/{d['id']}/raw",
+            )
+        )
+    return PhotoList(photos=photos)
+
+@api_router.get("/photos/{photo_id}/raw")
+async def get_photo_raw(photo_id: str):
+    # Ensure photo metadata exists
+    meta = await db.photos.find_one({"id": photo_id}, {"_id": 0})
+    if not meta:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    content_type = meta.get("content_type") or "application/octet-stream"
+
+    try:
+        download_stream = await bucket.open_download_stream(photo_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Image binary not found")
+
+    async def file_iterator():
+        while True:
+            chunk = await download_stream.readchunk()
+            if not chunk:
+                break
+            yield chunk
+
+    return StreamingResponse(file_iterator(), media_type=content_type)
 
 # Include the router in the main app
 app.include_router(api_router)
