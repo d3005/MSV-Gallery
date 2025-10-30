@@ -216,14 +216,14 @@ async def seed_photos_from_public():
         filename = disk_path.name
         content_type = "image/jpeg" if filename.lower().endswith(".jpg") or filename.lower().endswith(".jpeg") else "image/png"
         try:
-            upload_stream = await bucket.open_upload_stream_with_id(photo_id, filename, metadata={"contentType": content_type})
             with open(disk_path, "rb") as rf:
-                while True:
-                    chunk = rf.read(1024 * 1024)
-                    if not chunk:
-                        break
-                    await upload_stream.write(chunk)
-            await upload_stream.close()
+                file_data = rf.read()
+            await bucket.upload_from_stream_with_id(
+                photo_id, 
+                filename, 
+                file_data, 
+                metadata={"contentType": content_type}
+            )
         except Exception as e:
             try:
                 await bucket.delete(photo_id)
