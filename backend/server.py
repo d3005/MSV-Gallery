@@ -96,11 +96,12 @@ async def upload_photo(
             metadata={"contentType": file.content_type},
         )
         total = 0
-        chunk = await file.read(1024 * 1024)
-        while chunk:
+        while True:
+            chunk = await file.read(1024 * 1024)
+            if not chunk:
+                break
             total += len(chunk)
             await upload_stream.write(chunk)
-            chunk = await file.read(1024 * 1024)
         await upload_stream.close()
     except Exception as e:
         # Cleanup partial file if needed
@@ -179,6 +180,72 @@ async def get_photo_raw(photo_id: str):
             yield chunk
 
     return StreamingResponse(file_iterator(), media_type=content_type)
+
+@api_router.post("/photos/seed")
+async def seed_photos_from_public():
+    """Seed database with images from frontend/public/images.json and images directory.
+    Only runs if collection is empty, to avoid duplicates.
+    """
+    existing = await db.photos.estimated_document_count()
+    if existing and existing > 0:
+        return {"status": "skipped", "reason": "photos collection not empty", "count": existing}
+
+    public_dir = Path("/app/frontend/public")
+    json_path = public_dir / "images.json"
+    images_dir = public_dir / "images"
+
+    if not json_path.exists() or not images_dir.exists():
+        raise HTTPException(status_code=404, detail="images.json or images directory not found")
+
+    import json
+    with open(json_path, "r") as f:
+        data = json.load(f)
+    images = data.get("images", [])
+
+    created_total = 0
+    for item in images:
+        url = item.get("url")
+        alt = item.get("alt")
+        if not url:
+            continue
+        # url is like /images/img1.jpg
+        disk_path = images_dir / Path(url).name
+        if not disk_path.exists():
+            continue
+        photo_id = str(uuid.uuid4())
+        filename = disk_path.name
+        content_type = "image/jpeg" if filename.lower().endswith(".jpg") or filename.lower().endswith(".jpeg") else "image/png"
+        try:
+            upload_stream = await bucket.open_upload_stream_with_id(photo_id, filename, metadata={"contentType": content_type})
+            with open(disk_path, "rb") as rf:
+                while True:
+                    chunk = rf.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    await upload_stream.write(chunk)
+            await upload_stream.close()
+        except Exception as e:
+            try:
+                await bucket.delete(photo_id)
+            except Exception:
+                pass
+            raise HTTPException(status_code=500, detail=f"Seed upload failed for {filename}: {e}")
+
+        created = datetime.now(timezone.utc)
+        size = disk_path.stat().st_size
+        await db.photos.insert_one({
+            "id": photo_id,
+            "file_id": photo_id,
+            "filename": filename,
+            "content_type": content_type,
+            "size": size,
+            "created_at": created.isoformat(),
+            "alt": alt,
+            "title": alt,
+        })
+        created_total += 1
+
+    return {"status": "ok", "created": created_total}
 
 # Include the router in the main app
 app.include_router(api_router)
