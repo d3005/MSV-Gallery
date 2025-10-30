@@ -222,7 +222,7 @@ async def seed_photos_from_public():
                     chunk = rf.read(1024 * 1024)
                     if not chunk:
                         break
-                    await upload_stream.write(chunk)
+                    upload_stream.write(chunk)
             await upload_stream.close()
         except Exception as e:
             try:
