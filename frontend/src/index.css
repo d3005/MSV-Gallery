@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Page transition for route changes */
+.page-enter {
+  opacity: 0.0;
+  transform: translateY(6px);
+  filter: saturate(0.9);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  filter: saturate(1);
+  transition: opacity 300ms ease, transform 300ms ease, filter 300ms ease;
+}
+
+/* Image soft fade is set inline via opacity-0/transition classes */
+
 body {
     margin: 0;
     font-family:
