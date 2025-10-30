@@ -90,19 +90,14 @@ async def upload_photo(
 
     # Stream upload into GridFS with custom string id
     try:
-        upload_stream = await bucket.open_upload_stream_with_id(
+        file_data = await file.read()
+        total = len(file_data)
+        await bucket.upload_from_stream_with_id(
             photo_id,
             file.filename,
+            file_data,
             metadata={"contentType": file.content_type},
         )
-        total = 0
-        while True:
-            chunk = await file.read(1024 * 1024)
-            if not chunk:
-                break
-            total += len(chunk)
-            await upload_stream.write(chunk)
-        await upload_stream.close()
     except Exception as e:
         # Cleanup partial file if needed
         try:
