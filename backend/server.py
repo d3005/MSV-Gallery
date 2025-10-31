@@ -10,7 +10,13 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
+from io import BytesIO
 
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except Exception:
+    PIL_AVAILABLE = False
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -99,7 +105,6 @@ async def upload_photo(
             metadata={"contentType": file.content_type},
         )
     except Exception as e:
-        # Cleanup partial file if needed
         try:
             await bucket.delete(photo_id)
         except Exception:
@@ -110,7 +115,7 @@ async def upload_photo(
 
     photo_doc = {
         "id": photo_id,
-        "file_id": photo_id,  # same as id to avoid exposing ObjectId
+        "file_id": photo_id,
         "filename": file.filename,
         "content_type": file.content_type,
         "size": total,
@@ -156,7 +161,6 @@ async def list_photos():
 
 @api_router.get("/photos/{photo_id}/raw")
 async def get_photo_raw(photo_id: str):
-    # Ensure photo metadata exists
     meta = await db.photos.find_one({"id": photo_id}, {"_id": 0})
     if not meta:
         raise HTTPException(status_code=404, detail="Photo not found")
@@ -174,13 +178,67 @@ async def get_photo_raw(photo_id: str):
                 break
             yield chunk
 
-    return StreamingResponse(file_iterator(), media_type=content_type)
+    headers = {"Cache-Control": "public, max-age=86400"}
+    return StreamingResponse(file_iterator(), media_type=content_type, headers=headers)
+
+@api_router.get("/photos/{photo_id}/thumb")
+async def get_photo_thumb(photo_id: str, max: int = 800, q: int = 72):
+    """Return a resized thumbnail for faster gallery loading.
+    Falls back to raw if Pillow is unavailable.
+    """
+    if not PIL_AVAILABLE:
+        return await get_photo_raw(photo_id)
+
+    meta = await db.photos.find_one({"id": photo_id}, {"_id": 0})
+    if not meta:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    try:
+        download_stream = await bucket.open_download_stream(photo_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Image binary not found")
+
+    # Load into Pillow
+    full = BytesIO()
+    while True:
+        chunk = await download_stream.readchunk()
+        if not chunk:
+            break
+        full.write(chunk)
+    full.seek(0)
+
+    try:
+        img = Image.open(full)
+        img.thumbnail((max, max))
+        out = BytesIO()
+        # Convert to RGB JPEG for size unless original is PNG and small
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        img.save(out, format="JPEG", quality=q, optimize=True)
+        out.seek(0)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Thumbnail error: {e}")
+
+    headers = {"Cache-Control": "public, max-age=86400"}
+    return StreamingResponse(out, media_type="image/jpeg", headers=headers)
+
+@api_router.delete("/photos/{photo_id}")
+async def delete_photo(photo_id: str):
+    meta = await db.photos.find_one({"id": photo_id}, {"_id": 0})
+    if not meta:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    # Delete GridFS binary and metadata
+    try:
+        await bucket.delete(photo_id)
+    except Exception:
+        # continue deleting metadata even if file missing
+        pass
+    await db.photos.delete_one({"id": photo_id})
+    return {"status": "ok", "deleted": photo_id}
 
 @api_router.post("/photos/seed")
 async def seed_photos_from_public():
-    """Seed database with images from frontend/public/images.json and images directory.
-    Only runs if collection is empty, to avoid duplicates.
-    """
     existing = await db.photos.estimated_document_count()
     if existing and existing > 0:
         return {"status": "skipped", "reason": "photos collection not empty", "count": existing}
@@ -203,7 +261,6 @@ async def seed_photos_from_public():
         alt = item.get("alt")
         if not url:
             continue
-        # url is like /images/img1.jpg
         disk_path = images_dir / Path(url).name
         if not disk_path.exists():
             continue
@@ -214,10 +271,10 @@ async def seed_photos_from_public():
             with open(disk_path, "rb") as rf:
                 file_data = rf.read()
             await bucket.upload_from_stream_with_id(
-                photo_id, 
-                filename, 
-                file_data, 
-                metadata={"contentType": content_type}
+                photo_id,
+                filename,
+                file_data,
+                metadata={"contentType": content_type},
             )
         except Exception as e:
             try:
