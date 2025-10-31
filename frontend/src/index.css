@@ -46,29 +46,7 @@ code { font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", mon
         --chart-5: 27 87% 67%;
         --radius: 0.5rem;
     }
-    /* high contrast mode */
-    .hc {
-        --background: 0 0% 0%;
-        --foreground: 0 0% 100%;
-        --card: 0 0% 6%;
-        --card-foreground: 0 0% 100%;
-        --popover: 0 0% 6%;
-        --popover-foreground: 0 0% 100%;
-        --primary: 0 0% 100%;
-        --primary-foreground: 0 0% 0%;
-        --secondary: 0 0% 12%;
-        --secondary-foreground: 0 0% 100%;
-        --muted: 0 0% 12%;
-        --muted-foreground: 0 0% 90%;
-        --accent: 0 0% 12%;
-        --accent-foreground: 0 0% 100%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 0 0% 100%;
-        --border: 0 0% 30%;
-        --input: 0 0% 30%;
-        --ring: 0 0% 100%;
-    }
-    .dark { /* existing dark theme vars remain */
+    .dark {
         --background: 0 0% 3.9%;
         --foreground: 0 0% 98%;
         --card: 0 0% 3.9%;
@@ -88,6 +66,28 @@ code { font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", mon
         --border: 0 0% 14.9%;
         --input: 0 0% 14.9%;
         --ring: 0 0% 83.1%;
+    }
+    /* Place HC after dark so it overrides in cascade */
+    .hc {
+        --background: 0 0% 0% !important;
+        --foreground: 0 0% 100% !important;
+        --card: 0 0% 6% !important;
+        --card-foreground: 0 0% 100% !important;
+        --popover: 0 0% 6% !important;
+        --popover-foreground: 0 0% 100% !important;
+        --primary: 0 0% 100% !important;
+        --primary-foreground: 0 0% 0% !important;
+        --secondary: 0 0% 12% !important;
+        --secondary-foreground: 0 0% 100% !important;
+        --muted: 0 0% 12% !important;
+        --muted-foreground: 0 0% 90% !important;
+        --accent: 0 0% 12% !important;
+        --accent-foreground: 0 0% 100% !important;
+        --destructive: 0 84.2% 60.2% !important;
+        --destructive-foreground: 0 0% 100% !important;
+        --border: 0 0% 30% !important;
+        --input: 0 0% 30% !important;
+        --ring: 0 0% 100% !important;
     }
 }
 
