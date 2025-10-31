@@ -20,7 +20,7 @@ const Home = () => {
         <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 pb-16 pt-14 md:grid-cols-2 md:pt-20">
           <div className="space-y-6">
             <h1 className="text-4xl font-extrabold leading-tight tracking-tight md:text-6xl">
-              MSVAV's Nature Gallery
+              Tranquil Frames
             </h1>
             <p className="text-muted-foreground md:text-lg">
               A calm, nature-first showcase of sky, moon, and bloom. Simple. Serene. Yours to explore.
