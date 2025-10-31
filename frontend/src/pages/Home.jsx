@@ -15,7 +15,6 @@ const Home = () => {
 
   return (
     <div>
-      {/* Clean, minimal hero with sky gradient */}
       <section className="relative">
         <div className="absolute inset-x-0 -z-10 h-[420px] bg-gradient-to-b from-sky-100 via-sky-50 to-transparent dark:from-slate-800 dark:via-slate-900 dark:to-transparent" />
         <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 pb-16 pt-14 md:grid-cols-2 md:pt-20">
@@ -33,7 +32,7 @@ const Home = () => {
             </div>
           </div>
           <div className="relative">
-            <img src="/moon.jpg" alt="Moon over a dark sky" className="aspect-[4/3] w-full rounded-2xl object-cover shadow-xl ring-1 ring-border" />
+            <img src="/moon.jpg" alt="Full moon close-up" className="aspect-[4/3] w-full rounded-2xl object-cover shadow-xl ring-1 ring-border" loading="eager" decoding="async" fetchpriority="high" />
           </div>
         </div>
       </section>

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import ThemeToggle from "@/components/ThemeToggle";
 import UploadModal from "@/components/UploadModal";
+import HighContrastToggle from "@/components/HighContrastToggle";
 
 const linkClass = (isActive) =>
   [
@@ -26,7 +27,7 @@ const Navbar = () => {
             <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-fuchsia-500 via-cyan-400 to-emerald-400 shadow-[0_0_18px_rgba(34,211,238,0.7)] ring-1 ring-cyan-300/50" />
             <span className="text-sm font-bold tracking-wide text-slate-100 drop-shadow-[0_0_8px_rgba(255,255,255,0.35)]">Still Nature</span>
           </Link>
-          <nav className="flex items-center gap-6">
+          <nav className="flex items-center gap-4">
             <NavLink to="/" className={({ isActive }) => linkClass(isActive)}>
               Home
             </NavLink>
@@ -42,6 +43,7 @@ const Navbar = () => {
             >
               Upload
             </button>
+            <HighContrastToggle />
             <ThemeToggle />
           </nav>
         </div>

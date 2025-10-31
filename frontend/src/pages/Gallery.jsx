@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -9,6 +10,7 @@ const Gallery = () => {
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [confirm, setConfirm] = useState({ open: false, id: null });
 
   const fetchPhotos = useCallback(async () => {
     try {
@@ -35,9 +37,10 @@ const Gallery = () => {
     return () => window.removeEventListener("gallery:refresh", refresh);
   }, [fetchPhotos]);
 
-  const onDelete = async (id) => {
-    const ok = window.confirm("Are you sure you want to permanently delete this photo?");
-    if (!ok) return;
+  const onDelete = (id) => setConfirm({ open: true, id });
+  const handleConfirm = async () => {
+    const id = confirm.id;
+    setConfirm({ open: false, id: null });
     try {
       await axios.delete(`${API}/photos/${id}`);
       fetchPhotos();
@@ -64,43 +67,54 @@ const Gallery = () => {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 pb-16 pt-10">
-      <div className="mb-6 flex items-end justify-between">
-        <h2 className="text-2xl font-bold md:text-3xl">Gallery</h2>
-        <p className="text-sm text-muted-foreground">{photos.length} photos</p>
-      </div>
-      <div className="columns-1 gap-5 sm:columns-2 md:columns-3">
-        {photos.map((photo, index) => (
-          <div key={photo.id} className="group relative mb-5 block break-inside-avoid overflow-hidden rounded-2xl ring-1 ring-border">
-            <Link to={`/photo/${index}`} aria-label={`Open photo ${index + 1}`}>
-              <img
-                src={`${API}${photo.path.replace('/raw', '/thumb')}`}
-                alt={photo.alt || `Photo ${index + 1}`}
-                className="w-full rounded-2xl object-cover opacity-0 transition-all duration-500 group-hover:scale-[1.02]"
-                loading="lazy"
-                onLoad={(e) => e.currentTarget.classList.remove("opacity-0")}
-              />
-            </Link>
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-            <div className="absolute bottom-3 left-3 flex gap-2">
-              <Link
-                to={`/photo/${index}`}
-                className="inline-flex items-center rounded-md bg-white/90 px-3 py-1 text-xs font-medium text-black shadow-sm backdrop-blur group-hover:bg-white"
-              >
-                View
+    <>
+      <main className="mx-auto max-w-6xl px-4 pb-16 pt-10">
+        <div className="mb-6 flex items-end justify-between">
+          <h2 className="text-2xl font-bold md:text-3xl">Gallery</h2>
+          <p className="text-sm text-muted-foreground">{photos.length} photos</p>
+        </div>
+        <div className="columns-1 gap-5 sm:columns-2 md:columns-3">
+          {photos.map((photo, index) => (
+            <div key={photo.id} className="group relative mb-5 block break-inside-avoid overflow-hidden rounded-2xl ring-1 ring-border">
+              <Link to={`/photo/${index}`} aria-label={`Open photo ${index + 1}`}>
+                <img
+                  src={`${API}${photo.path.replace('/raw', '/thumb')}`}
+                  alt={photo.alt || `Photo ${index + 1}`}
+                  className="w-full rounded-2xl object-cover opacity-0 transition-all duration-500 group-hover:scale-[1.02]"
+                  loading="lazy"
+                  onLoad={(e) => e.currentTarget.classList.remove("opacity-0")}
+                />
               </Link>
-              <button
-                onClick={() => onDelete(photo.id)}
-                className="inline-flex items-center rounded-md bg-red-600/90 px-3 py-1 text-xs font-medium text-white shadow-sm hover:bg-red-700"
-                aria-label={`Delete photo ${index + 1}`}
-              >
-                Delete
-              </button>
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <div className="absolute bottom-3 left-3 flex gap-2">
+                <Link
+                  to={`/photo/${index}`}
+                  className="inline-flex items-center rounded-md bg-white/90 px-3 py-1 text-xs font-medium text-black shadow-sm backdrop-blur group-hover:bg-white"
+                >
+                  View
+                </Link>
+                <button
+                  onClick={() => onDelete(photo.id)}
+                  className="inline-flex items-center rounded-md bg-red-600/90 px-3 py-1 text-xs font-medium text-white shadow-sm hover:bg-red-700"
+                  aria-label={`Delete photo ${index + 1}`}
+                >
+                  Delete
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-    </main>
+          ))}
+        </div>
+      </main>
+      <ConfirmDialog
+        open={confirm.open}
+        title="Delete photo?"
+        description="This will permanently remove the photo from the gallery and database."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirm}
+        onCancel={() => setConfirm({ open: false, id: null })}
+      />
+    </>
   );
 };
 

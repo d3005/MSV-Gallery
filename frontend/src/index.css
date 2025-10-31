@@ -2,23 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Page transition for route changes */
-.page-enter {
-  opacity: 0.0;
-  transform: translateY(6px);
-  filter: saturate(0.9);
-}
-.page-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  filter: saturate(1);
-  transition: opacity 300ms ease, transform 300ms ease, filter 300ms ease;
-}
-
-/* Skip link - becomes visible on focus */
+.page-enter { opacity: 0.0; transform: translateY(6px); filter: saturate(0.9); }
+.page-enter-active { opacity: 1; transform: translateY(0); filter: saturate(1); transition: opacity 300ms ease, transform 300ms ease, filter 300ms ease; }
 .skip-link { position: fixed; z-index: 50; }
-
-/* Image soft fade is set inline via opacity-0/transition classes */
 
 body {
     margin: 0;
@@ -30,10 +16,7 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-    font-family:
-        source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
-}
+code { font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace; }
 
 @layer base {
     :root {
@@ -63,7 +46,29 @@ code {
         --chart-5: 27 87% 67%;
         --radius: 0.5rem;
     }
-    .dark {
+    /* high contrast mode */
+    .hc {
+        --background: 0 0% 0%;
+        --foreground: 0 0% 100%;
+        --card: 0 0% 6%;
+        --card-foreground: 0 0% 100%;
+        --popover: 0 0% 6%;
+        --popover-foreground: 0 0% 100%;
+        --primary: 0 0% 100%;
+        --primary-foreground: 0 0% 0%;
+        --secondary: 0 0% 12%;
+        --secondary-foreground: 0 0% 100%;
+        --muted: 0 0% 12%;
+        --muted-foreground: 0 0% 90%;
+        --accent: 0 0% 12%;
+        --accent-foreground: 0 0% 100%;
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 0 0% 30%;
+        --input: 0 0% 30%;
+        --ring: 0 0% 100%;
+    }
+    .dark { /* existing dark theme vars remain */
         --background: 0 0% 3.9%;
         --foreground: 0 0% 98%;
         --card: 0 0% 3.9%;
@@ -83,11 +88,6 @@ code {
         --border: 0 0% 14.9%;
         --input: 0 0% 14.9%;
         --ring: 0 0% 83.1%;
-        --chart-1: 220 70% 50%;
-        --chart-2: 160 60% 45%;
-        --chart-3: 30 80% 55%;
-        --chart-4: 280 65% 60%;
-        --chart-5: 340 75% 55%;
     }
 }
 
