@@ -8,9 +8,7 @@ const linkClass = (isActive) =>
     "relative px-1 py-0.5 text-sm font-semibold tracking-wide transition-all",
     "text-slate-200/90 hover:text-cyan-300",
     isActive ? "text-cyan-300" : "",
-    // neon glow around text
     "drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]",
-    // underline glow on hover/active
     "after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-0 after:rounded-full",
     "after:bg-gradient-to-r after:from-fuchsia-400 after:to-cyan-400 after:shadow-[0_0_10px_#22d3ee] after:transition-all",
     isActive ? "after:w-full" : "hover:after:w-full",
@@ -26,7 +24,7 @@ const Navbar = () => {
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <Link to="/" className="group inline-flex items-center gap-2">
             <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-fuchsia-500 via-cyan-400 to-emerald-400 shadow-[0_0_18px_rgba(34,211,238,0.7)] ring-1 ring-cyan-300/50" />
-            <span className="text-sm font-bold tracking-wide text-slate-100 drop-shadow-[0_0_8px_rgba(255,255,255,0.35)]">MSVAV's Clicks</span>
+            <span className="text-sm font-bold tracking-wide text-slate-100 drop-shadow-[0_0_8px_rgba(255,255,255,0.35)]">Still Nature</span>
           </Link>
           <nav className="flex items-center gap-6">
             <NavLink to="/" className={({ isActive }) => linkClass(isActive)}>

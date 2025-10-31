@@ -36,11 +36,14 @@ const Gallery = () => {
   }, [fetchPhotos]);
 
   const onDelete = async (id) => {
+    const ok = window.confirm("Are you sure you want to permanently delete this photo?");
+    if (!ok) return;
     try {
       await axios.delete(`${API}/photos/${id}`);
       fetchPhotos();
     } catch (e) {
       console.error(e);
+      alert("Delete failed. Please try again.");
     }
   };
 
