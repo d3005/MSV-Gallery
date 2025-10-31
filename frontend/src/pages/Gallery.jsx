@@ -35,6 +35,15 @@ const Gallery = () => {
     return () => window.removeEventListener("gallery:refresh", refresh);
   }, [fetchPhotos]);
 
+  const onDelete = async (id) => {
+    try {
+      await axios.delete(`${API}/photos/${id}`);
+      fetchPhotos();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-10">
@@ -59,25 +68,33 @@ const Gallery = () => {
       </div>
       <div className="columns-1 gap-5 sm:columns-2 md:columns-3">
         {photos.map((photo, index) => (
-          <Link
-            key={photo.id}
-            to={`/photo/${index}`}
-            className="group relative mb-5 block break-inside-avoid overflow-hidden rounded-2xl ring-1 ring-border"
-          >
-            <img
-              src={`${API}${photo.path}`}
-              alt={photo.alt || `Photo ${index + 1}`}
-              className="w-full rounded-2xl object-cover opacity-0 transition-all duration-500 group-hover:scale-[1.02]"
-              loading="lazy"
-              onLoad={(e) => e.currentTarget.classList.remove("opacity-0")}
-            />
+          <div key={photo.id} className="group relative mb-5 block break-inside-avoid overflow-hidden rounded-2xl ring-1 ring-border">
+            <Link to={`/photo/${index}`} aria-label={`Open photo ${index + 1}`}>
+              <img
+                src={`${API}${photo.path.replace('/raw', '/thumb')}`}
+                alt={photo.alt || `Photo ${index + 1}`}
+                className="w-full rounded-2xl object-cover opacity-0 transition-all duration-500 group-hover:scale-[1.02]"
+                loading="lazy"
+                onLoad={(e) => e.currentTarget.classList.remove("opacity-0")}
+              />
+            </Link>
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-            <div className="absolute bottom-3 left-3">
-              <span className="inline-flex items-center rounded-md bg-white/90 px-3 py-1 text-xs font-medium text-black shadow-sm backdrop-blur group-hover:bg-white">
+            <div className="absolute bottom-3 left-3 flex gap-2">
+              <Link
+                to={`/photo/${index}`}
+                className="inline-flex items-center rounded-md bg-white/90 px-3 py-1 text-xs font-medium text-black shadow-sm backdrop-blur group-hover:bg-white"
+              >
                 View
-              </span>
+              </Link>
+              <button
+                onClick={() => onDelete(photo.id)}
+                className="inline-flex items-center rounded-md bg-red-600/90 px-3 py-1 text-xs font-medium text-white shadow-sm hover:bg-red-700"
+                aria-label={`Delete photo ${index + 1}`}
+              >
+                Delete
+              </button>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
     </main>
