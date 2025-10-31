@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, APIRouter, UploadFile, File, Form, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -59,6 +59,10 @@ class Photo(BaseModel):
 
 class PhotoList(BaseModel):
     photos: List[Photo]
+    page: int
+    limit: int
+    total: int
+    has_more: bool
 
 # Add your routes to the router instead of directly to app
 @api_router.get("/")
@@ -138,8 +142,11 @@ async def upload_photo(
     return resp
 
 @api_router.get("/photos", response_model=PhotoList)
-async def list_photos():
-    docs = await db.photos.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+async def list_photos(page: int = Query(1, ge=1), limit: int = Query(12, ge=1, le=100)):
+    skip = (page - 1) * limit
+    total = await db.photos.count_documents({})
+    cursor = db.photos.find({}, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit)
+    docs = await cursor.to_list(length=limit)
     photos: List[Photo] = []
     for d in docs:
         created = d.get("created_at")
@@ -157,10 +164,11 @@ async def list_photos():
                 path=f"/photos/{d['id']}/raw",
             )
         )
-    return PhotoList(photos=photos)
+    has_more = page * limit < total
+    return PhotoList(photos=photos, page=page, limit=limit, total=total, has_more=has_more)
 
 @api_router.get("/photos/{photo_id}/raw")
-async def get_photo_raw(photo_id: str):
+async def get_photo_raw(photo_id: str, download: bool = False):
     meta = await db.photos.find_one({"id": photo_id}, {"_id": 0})
     if not meta:
         raise HTTPException(status_code=404, detail="Photo not found")
@@ -179,6 +187,8 @@ async def get_photo_raw(photo_id: str):
             yield chunk
 
     headers = {"Cache-Control": "public, max-age=86400"}
+    if download:
+        headers["Content-Disposition"] = f"attachment; filename={meta.get('filename','image')}"
     return StreamingResponse(file_iterator(), media_type=content_type, headers=headers)
 
 @api_router.get("/photos/{photo_id}/thumb")
@@ -211,7 +221,6 @@ async def get_photo_thumb(photo_id: str, max: int = 800, q: int = 72):
         img = Image.open(full)
         img.thumbnail((max, max))
         out = BytesIO()
-        # Convert to RGB JPEG for size unless original is PNG and small
         if img.mode in ("RGBA", "P"):
             img = img.convert("RGB")
         img.save(out, format="JPEG", quality=q, optimize=True)
@@ -228,11 +237,9 @@ async def delete_photo(photo_id: str):
     if not meta:
         raise HTTPException(status_code=404, detail="Photo not found")
 
-    # Delete GridFS binary and metadata
     try:
         await bucket.delete(photo_id)
     except Exception:
-        # continue deleting metadata even if file missing
         pass
     await db.photos.delete_one({"id": photo_id})
     return {"status": "ok", "deleted": photo_id}
