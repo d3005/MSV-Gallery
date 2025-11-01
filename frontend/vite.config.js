@@ -4,6 +4,8 @@ import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // GitHub Pages under https://<user>.github.io/MSV-Gallery/
+  base: '/MSV-Gallery/',
   plugins: [react()],
   resolve: {
     alias: {
